@@ -13,6 +13,7 @@
 
 const http = require('http');
 const { URL } = require('url');
+const { PAGE } = require('./webui');
 
 const DEFAULT_PORT = 37777;
 const EVENT_POLL_MS = 25000;
@@ -61,6 +62,12 @@ class Bridge {
   async handle(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     const url = new URL(req.url, `http://127.0.0.1:${this.port}`);
+
+    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/web')) {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+      res.end(PAGE);
+      return;
+    }
 
     if (req.method === 'GET' && url.pathname === '/health') {
       res.writeHead(200, { 'content-type': 'application/json' });

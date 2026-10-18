@@ -15,8 +15,9 @@ HTTP/JSON bridge on `127.0.0.1:37777`.
 
 > **Status: developer preview.** This is an independent community port, not an
 > official DeepSeek product. It implements a focused subset of the harness
-> (agent loop + plugin tools + approval flow); the full dsh feature set
-> (Web UI, MCP, skill ecosystem, checkpoints, desktop) is on the roadmap.
+> (agent loop + plugin tools + approval flow + MCP plugin protocol + in-app Web
+> UI); the full dsh feature set (skill ecosystem, checkpoints, desktop) is on
+> the roadmap.
 
 ---
 
@@ -127,8 +128,10 @@ its concepts onto the phone:
 | Runtime / environment | `native/system`, sandboxes | nodejs-mobile `libnode.so` + Android app sandbox |
 | Configuration | `packages/settings`, `packages/credentials` | `SettingsStore.kt` (DataStore) |
 
-The full upstream surface (Web UI, MCP, skills, checkpoints, sessions) is
-roadmap material — see [Current capabilities](#current-capabilities).
+The upstream Web UI is replaced by a self-hosted light page (see
+[In-app Web UI](#in-app-web-ui)); the remaining upstream surface (skills,
+checkpoints, sessions) is roadmap material — see
+[Current capabilities](#current-capabilities).
 
 ## Current capabilities
 
@@ -143,7 +146,7 @@ roadmap material — see [Current capabilities](#current-capabilities).
 | DeepSeek API + any OpenAI-compatible endpoint | ✅ |
 | Workspace confinement (no path escape) | ✅ |
 | Foreground service keeping the agent alive | ✅ |
-| Web UI (dsh's browser client) | 🚧 roadmap |
+| Web UI (in-app light page, WebView/browser via `127.0.0.1:37777`) | ✅ |
 | Skills / checkpoints (beyond MCP) | 🚧 roadmap |
 
 ## MCP (Model Context Protocol) support
@@ -161,6 +164,22 @@ their tools become callable by the model as `mcp.<server>.<tool>`.
 
 Test: `cd node-host && node test/mcp.test.js` (spins up a mock MCP server and
 drives a full agent loop calling `mcp.mock.echo`).
+
+## In-app Web UI
+
+Instead of porting dsh's browser client (which drags in a heavy dependency
+tree for no UI gain), the bridge serves a single-file light chat page at
+`GET /` (and `/web`). It speaks the **same JSON protocol** as the native UI
+(`/rpc` + `/events`), so there is no extra server logic:
+
+- Open it from the app: chat screen → **网页** (WebView), or
+- any browser on the device: `http://127.0.0.1:37777`
+
+Why this shape (WebView = presentation layer only) is the research-backed
+choice is documented in [`node-host/README-WEB.md`](node-host/README-WEB.md),
+with the surveyed papers.
+
+Test: `cd node-host && node test/webui.test.js`.
 
 ## Security notes
 

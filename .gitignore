@@ -21,3 +21,6 @@ app/libnode/
 
 # Kotlin/Gradle caches
 .kotlin/
+
+# CMake build output (machine-local)
+app/.cxx/

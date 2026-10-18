@@ -37,7 +37,7 @@ import com.dsh.android.model.RuntimeStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(vm: AgentViewModel, onOpenSettings: () -> Unit) {
+fun ChatScreen(vm: AgentViewModel, onOpenSettings: () -> Unit, onOpenWeb: () -> Unit) {
     val messages by vm.messages.collectAsState()
     val status by vm.runtimeStatus.collectAsState()
     val sending by vm.sending.collectAsState()
@@ -71,6 +71,9 @@ fun ChatScreen(vm: AgentViewModel, onOpenSettings: () -> Unit) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = onOpenWeb) {
+                        Text("网页", style = MaterialTheme.typography.labelLarge)
+                    }
                     IconButton(onClick = onOpenSettings) {
                         Text("设置", style = MaterialTheme.typography.labelLarge)
                     }
