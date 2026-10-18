@@ -18,3 +18,6 @@ app/libnode/
 # Keystores / secrets
 *.jks
 *.keystore
+
+# Kotlin/Gradle caches
+.kotlin/
