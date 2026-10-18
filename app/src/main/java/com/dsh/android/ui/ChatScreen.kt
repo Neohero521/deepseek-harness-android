@@ -41,6 +41,7 @@ fun ChatScreen(vm: AgentViewModel, onOpenSettings: () -> Unit, onOpenWeb: () -> 
     val messages by vm.messages.collectAsState()
     val status by vm.runtimeStatus.collectAsState()
     val sending by vm.sending.collectAsState()
+    val runtimeError by vm.runtimeError.collectAsState()
     val listState = rememberLazyListState()
     var input by remember { mutableStateOf("") }
 
@@ -68,6 +69,13 @@ fun ChatScreen(vm: AgentViewModel, onOpenSettings: () -> Unit, onOpenWeb: () -> 
                                 RuntimeStatus.STARTING -> MaterialTheme.colorScheme.onSurfaceVariant
                             },
                         )
+                        if (runtimeError != null) {
+                            Text(
+                                runtimeError!!,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
                 },
                 actions = {

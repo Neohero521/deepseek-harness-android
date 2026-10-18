@@ -24,17 +24,24 @@ object NodeRuntime {
     // Starts the Node.js runtime and blocks until it exits.
     private external fun startNodeWithArguments(arguments: Array<String>): Int
 
-    init {
-        System.loadLibrary("native-lib")
-        System.loadLibrary("node")
-    }
-
     @Volatile
     private var started = false
 
     @Volatile
     var lastError: String? = null
         private set
+
+    init {
+        try {
+            System.loadLibrary("native-lib")
+            System.loadLibrary("node")
+        } catch (t: Throwable) {
+            // Never crash the app on native-load failure: surface it instead
+            // so the UI can show the reason (and logcat has the stack).
+            lastError = "native load failed: ${t.message}"
+            Log.e(TAG, "failed to load native libraries", t)
+        }
+    }
 
     fun isRunning(): Boolean = started
 

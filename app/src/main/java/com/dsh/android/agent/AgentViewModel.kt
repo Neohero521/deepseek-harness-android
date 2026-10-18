@@ -42,6 +42,9 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
     private val _sending = MutableStateFlow(false)
     val sending: StateFlow<Boolean> = _sending.asStateFlow()
 
+    private val _runtimeError = MutableStateFlow<String?>(null)
+    val runtimeError: StateFlow<String?> = _runtimeError.asStateFlow()
+
     private val _mcpStatus = MutableStateFlow<List<JSONObject>>(emptyList())
     val mcpStatus: StateFlow<List<JSONObject>> = _mcpStatus.asStateFlow()
 
@@ -63,6 +66,7 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
         healthJob = viewModelScope.launch {
             while (isActive) {
                 val ok = client.ping()
+                _runtimeError.value = NodeRuntime.lastError
                 _runtimeStatus.value = if (ok) RuntimeStatus.RUNNING else RuntimeStatus.STARTING
                 if (ok) break
                 delay(1_500)
