@@ -53,6 +53,14 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
     private var runtimeStarted = false
 
     init {
+        // Surface a crash report left by a previous native crash (if any)
+        // before NodeRuntime.start() clears it.
+        NodeRuntime.readCrashReport(application)?.let { report ->
+            _messages.value = listOf(
+                ChatItem.System(idSeq.incrementAndGet(), "上次启动发生原生崩溃，日志如下（可复制发我）：\n$report"),
+            )
+        }
+
         viewModelScope.launch {
             settingsStore.settings.collect { loaded ->
                 _settings.value = loaded

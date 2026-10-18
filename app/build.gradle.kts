@@ -69,7 +69,10 @@ android {
 
     packaging {
         jniLibs {
-            useLegacyPackaging = false
+            // Extract .so to disk instead of mmap-ing from the APK: some
+            // OEM ROMs (and older runtimes) have dlopen bugs with
+            // extractNativeLibs=false; on-device crash reports pointed here.
+            useLegacyPackaging = true
         }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"

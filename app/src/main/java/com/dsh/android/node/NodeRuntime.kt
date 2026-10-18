@@ -21,6 +21,15 @@ object NodeRuntime {
     const val BRIDGE_PORT = 37777
     const val BRIDGE_HOST = "127.0.0.1"
 
+    /** Where the native shim records crash backtraces (see native-lib.cpp). */
+    const val CRASH_FILE = "native-crash.txt"
+
+    /** Read the crash report left by the previous run, if any. */
+    fun readCrashReport(context: Context): String? {
+        val f = File(context.filesDir, CRASH_FILE)
+        return if (f.exists()) f.readText().trim().ifEmpty { null } else null
+    }
+
     // Starts the Node.js runtime and blocks until it exits.
     private external fun startNodeWithArguments(arguments: Array<String>): Int
 
@@ -59,6 +68,10 @@ object NodeRuntime {
                 val workspace = File(context.filesDir, "workspace")
                 workspace.mkdirs()
 
+                // Start from a clean slate for crash diagnostics.
+                val crashFile = File(context.filesDir, CRASH_FILE)
+                crashFile.delete()
+
                 val args = buildList {
                     add("node")
                     add(File(nodeDir, "main.js").absolutePath)
@@ -66,6 +79,8 @@ object NodeRuntime {
                     add(workspace.absolutePath)
                     add("--port")
                     add(BRIDGE_PORT.toString())
+                    add("--crash-file")
+                    add(crashFile.absolutePath)
                     if (!apiKey.isNullOrBlank()) {
                         add("--api-key")
                         add(apiKey)
