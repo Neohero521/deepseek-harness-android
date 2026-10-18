@@ -158,19 +158,33 @@ class Bridge {
       case 'agent.stop':
         a.stop();
         return { ok: true };
+      case 'mcp.configure': {
+        const servers = Array.isArray(params.servers) ? params.servers : [];
+        a.config.mcpServers = servers;
+        // connect asynchronously; status is observable via mcp.status
+        setImmediate(() => {
+          a.mcps.configure(servers).catch((err) =>
+            this.emit({ type: 'error', message: `MCP configure failed: ${err.message}` }),
+          );
+        });
+        return { ok: true, connecting: servers.length };
+      }
+      case 'mcp.status':
+        return { servers: a.mcps.status() };
       default:
         throw new Error(`unknown method: ${method}`);
     }
   }
 
   publicConfig() {
-    const { apiKey, baseUrl, model, approvalMode, workDir } = this.agent.config;
+    const { apiKey, baseUrl, model, approvalMode, workDir, mcpServers } = this.agent.config;
     return {
       apiKey: apiKey ? '***' : '',
       baseUrl,
       model,
       approvalMode,
       workDir,
+      mcpServers: Array.isArray(mcpServers) ? mcpServers : [],
     };
   }
 }

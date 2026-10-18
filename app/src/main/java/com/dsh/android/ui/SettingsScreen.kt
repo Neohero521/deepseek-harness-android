@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,16 +33,19 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.dsh.android.agent.AgentViewModel
 import com.dsh.android.data.HarnessSettings
+import com.dsh.android.data.McpServerConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(vm: AgentViewModel, onBack: () -> Unit) {
     val current by vm.settings.collectAsState()
+    val mcpStatus by vm.mcpStatus.collectAsState()
 
     var apiKey by remember { mutableStateOf(current.apiKey) }
     var baseUrl by remember { mutableStateOf(current.baseUrl) }
     var model by remember { mutableStateOf(current.model) }
     var approvalMode by remember { mutableStateOf(current.approvalMode) }
+    var mcpServers by remember { mutableStateOf(current.mcpServers) }
 
     Scaffold(
         topBar = {
@@ -104,6 +110,38 @@ fun SettingsScreen(vm: AgentViewModel, onBack: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
+            Text("MCP 服务器（插件协议）", style = MaterialTheme.typography.titleSmall)
+            Text(
+                "MCP 工具会以 mcp.<服务器>.<工具> 的形式注入 agent。本地进程填 command（+args），远程端点填 url。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            mcpServers.forEachIndexed { index, server ->
+                McpServerEditor(
+                    server = server,
+                    onChanged = { updated -> mcpServers = mcpServers.toMutableList().apply { this[index] = updated } },
+                    onRemove = { mcpServers = mcpServers.toMutableList().apply { removeAt(index) } },
+                )
+            }
+            OutlinedButton(
+                onClick = { mcpServers = mcpServers + McpServerConfig() },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("+ 添加 MCP 服务器")
+            }
+            if (mcpStatus.isNotEmpty()) {
+                Text(
+                    mcpStatus.joinToString("\n") { s ->
+                        val name = s.optString("name")
+                        val connected = s.optBoolean("connected")
+                        val tools = s.optInt("tools")
+                        "· $name — ${if (connected) "已连接（$tools 个工具）" else "连接失败"}"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             Spacer(Modifier.height(4.dp))
             Button(
                 onClick = {
@@ -113,8 +151,10 @@ fun SettingsScreen(vm: AgentViewModel, onBack: () -> Unit) {
                             baseUrl = baseUrl,
                             model = model,
                             approvalMode = approvalMode,
+                            mcpServers = mcpServers.filter { it.name.isNotBlank() },
                         ),
                     )
+                    vm.refreshMcpStatusNow()
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -122,10 +162,54 @@ fun SettingsScreen(vm: AgentViewModel, onBack: () -> Unit) {
             }
 
             Text(
-                "运行时信息\n· Node.js 运行在应用沙箱内（libnode.so）\n· Agent 工作目录：应用私有目录/workspace\n· 工具：fs（受限工作区）、shell（toybox）、web.fetch\n· API Key 只存本机，仅发往你配置的端点",
+                "运行时信息\n· Node.js 运行在应用沙箱内（libnode.so）\n· Agent 工作目录：应用私有目录/workspace\n· 工具：fs（受限工作区）、shell（toybox）、web.fetch、MCP 插件\n· API Key 只存本机，仅发往你配置的端点",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@Composable
+private fun McpServerEditor(
+    server: McpServerConfig,
+    onChanged: (McpServerConfig) -> Unit,
+    onRemove: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedTextField(
+                value = server.name,
+                onValueChange = { onChanged(server.copy(name = it)) },
+                label = { Text("名称（agent 用 mcp.名称.工具 调用）") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = server.command,
+                onValueChange = { onChanged(server.copy(command = it)) },
+                label = { Text("本地命令（如 npx -y @some/mcp-server）") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = server.args,
+                onValueChange = { onChanged(server.copy(args = it)) },
+                label = { Text("参数（空格分隔，可选）") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = server.url,
+                onValueChange = { onChanged(server.copy(url = it)) },
+                label = { Text("或远程端点 URL（可选，与命令二选一）") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedButton(onClick = onRemove) { Text("删除此服务器") }
         }
     }
 }

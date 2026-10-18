@@ -138,12 +138,29 @@ roadmap material — see [Current capabilities](#current-capabilities).
 | Tool calls: `fs.list_dir` / `fs.read_file` / `fs.write_file` / `fs.delete_file` | ✅ |
 | Tool calls: `shell.run` (device shell, toybox) | ✅ |
 | Tool calls: `web.fetch` | ✅ |
+| **MCP plugin protocol** (stdio + streamable HTTP, tools become `mcp.<server>.<tool>`) | ✅ |
 | Approval cards (manual) / auto-approve mode | ✅ |
 | DeepSeek API + any OpenAI-compatible endpoint | ✅ |
 | Workspace confinement (no path escape) | ✅ |
 | Foreground service keeping the agent alive | ✅ |
 | Web UI (dsh's browser client) | 🚧 roadmap |
-| MCP servers / skill ecosystem / checkpoints | 🚧 roadmap |
+| Skills / checkpoints (beyond MCP) | 🚧 roadmap |
+
+## MCP (Model Context Protocol) support
+
+The agent is an MCP **client**: configure one or more MCP servers in Settings and
+their tools become callable by the model as `mcp.<server>.<tool>`.
+
+- **stdio transport**: local process — `command` (e.g. `npx -y @some/mcp-server`) plus space-separated `args`
+- **streamable HTTP transport**: remote endpoint — just `url`
+- Each server is isolated: a failing server is reported in `mcp.status` and
+  never blocks the others
+- Zero-dependency JSON-RPC client (`node-host/src/mcp/index.js`), MCP
+  protocol `2025-03-26`, compatible with servers built on the official
+  `@modelcontextprotocol/sdk`
+
+Test: `cd node-host && node test/mcp.test.js` (spins up a mock MCP server and
+drives a full agent loop calling `mcp.mock.echo`).
 
 ## Security notes
 

@@ -33,6 +33,7 @@ const config = {
   model: 'deepseek-chat',
   approvalMode: 'manual', // manual | auto
   workDir: WORKDIR,
+  mcpServers: [], // [{name, command?, args?, url?}] — set at runtime via mcp.configure
 };
 
 async function main() {

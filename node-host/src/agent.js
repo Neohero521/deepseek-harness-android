@@ -14,6 +14,7 @@
 
 const { ToolRegistry } = require('./tools');
 const { LlmClient } = require('./llm');
+const { McpManager } = require('./mcp');
 
 const MAX_ITERATIONS = 20;
 const MAX_TOOL_OUTPUT = 8000;
@@ -26,14 +27,24 @@ function truncate(s, n) {
 
 class AgentSession {
   constructor({ config, events }) {
-    this.config = config; // { apiKey, baseUrl, model, approvalMode, workDir }
+    this.config = config; // { apiKey, baseUrl, model, approvalMode, workDir, mcpServers }
     this.events = events; // { emit(ev) }  -> bridge
     this.llm = new LlmClient(config);
-    this.tools = new ToolRegistry({ workDir: config.workDir });
+    this.mcps = new McpManager({ logger: console });
+    this.tools = new ToolRegistry({ workDir: config.workDir, mcps: this.mcps });
     this.messages = [];
     this.running = false;
     this.pendingApprovals = new Map(); // callId -> resolve(bool)
     this.abortController = null;
+
+    // connect MCP servers configured before startup
+    if (Array.isArray(config.mcpServers) && config.mcpServers.length) {
+      setImmediate(() => {
+        this.mcps.configure(config.mcpServers).catch((err) => {
+          this.events.emit({ type: 'error', message: `MCP configure failed: ${err.message}` });
+        });
+      });
+    }
   }
 
   get busy() {

@@ -42,6 +42,9 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
     private val _sending = MutableStateFlow(false)
     val sending: StateFlow<Boolean> = _sending.asStateFlow()
 
+    private val _mcpStatus = MutableStateFlow<List<JSONObject>>(emptyList())
+    val mcpStatus: StateFlow<List<JSONObject>> = _mcpStatus.asStateFlow()
+
     private var eventLoopJob: Job? = null
     private var healthJob: Job? = null
     private var runtimeStarted = false
@@ -89,12 +92,29 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
                             .put("model", settings.model)
                             .put("approvalMode", settings.approvalMode),
                     )
+                    client.rpc(
+                        "mcp.configure",
+                        JSONObject().put("servers", settings.mcpServerParams()),
+                    )
+                    refreshMcpStatus()
                     return@launch
                 }
                 delay(1_500)
             }
         }
     }
+
+    /** Query MCP server connection state for the settings screen. */
+    private fun refreshMcpStatus() {
+        viewModelScope.launch {
+            val resp = client.rpc("mcp.status", JSONObject())
+            if (!resp.optBoolean("ok", false)) return@launch
+            val servers = resp.optJSONObject("result")?.optJSONArray("servers") ?: return@launch
+            _mcpStatus.value = (0 until servers.length()).map { servers.getJSONObject(it) }
+        }
+    }
+
+    fun refreshMcpStatusNow() = refreshMcpStatus()
 
     fun sendMessage(text: String) {
         val trimmed = text.trim()
