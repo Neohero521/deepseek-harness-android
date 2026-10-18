@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Stylized "DSH": a diamond (harness node) with a terminal caret. -->
+    <path
+        android:fillColor="#7C5CFF"
+        android:pathData="M54,26 L76,54 L54,82 L32,54 Z" />
+    <path
+        android:fillColor="#4D6BFE"
+        android:pathData="M54,38 L66,54 L54,70 L42,54 Z" />
+    <path
+        android:fillColor="#F5B14C"
+        android:pathData="M46,58 L50,54 L46,50 L48.5,50 L52.5,54 L48.5,58 Z" />
+    <path
+        android:fillColor="#0E1116"
+        android:pathData="M40,46 L44,46 L44,58 L40,58 Z" />
+</vector>

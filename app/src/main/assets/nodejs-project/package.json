@@ -1,0 +1,14 @@
+{
+  "name": "dsh-android-node-host",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness Android - in-app Node.js agent host. Runs the agent loop, tool plugins and the local bridge that the native Android UI talks to.",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "test": "node test/agent.test.js"
+  },
+  "engines": {
+    "node": ">=18.13.0"
+  },
+  "license": "MIT"
+}
